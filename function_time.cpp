@@ -1,32 +1,43 @@
 #include "function_time.h"
 int functime::living=0;
-map<string,f_time> functime::list;
+map<string,functime::f_time> functime::list;
+struct name_time
+{
+  string name;
+  int64_t time;
+  name_time(string a,int64_t& b):name(a),time(b){}
+};
+struct functime::f_time
+{
+  int64_t time;
+  chrono::high_resolution_clock::time_point begin;
+  int living;
+  f_time():time(0),living(0){}
+};
 functime::functime(const char* s):name(s)
 {
   ++living;
+  live=1;
   f_time& a=list[name];
   if(++a.living==1)
     a.begin=chrono::high_resolution_clock::now();
 }
 functime::~functime()
 {
-  f_time& a=list[name];
+  if(live)
+  {
+    f_time& a=list[name];
+    if(!(--a.living))
+      a.time+=chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now()-a.begin).count();
+    if(!(--living))printime(a.time);
+  }
+}
+void functime::erase()
+{
+  f_time& a=list[string(name)];
   if(!(--a.living))
     a.time+=chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now()-a.begin).count();
-  if(!(--living))printime(a.time);
-}
-void functime::insert(const char* s)
-{
-  ++living;
-  f_time& a=list[string(s)];
-  if(++a.living==1)
-    a.begin=chrono::high_resolution_clock::now();
-}
-void functime::erase(const char* s)
-{
-  f_time& a=list[string(s)];
-  if(!(--a.living))
-    a.time+=chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now()-a.begin).count();
+  live=0;
   if(!(--living))printime(a.time);
 }
 void functime::printime(int64_t all)
